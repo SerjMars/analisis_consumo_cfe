@@ -1,0 +1,1118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestión de Consumo Eléctrico</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <style>
+        body {
+            margin: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+        }
+        
+        #loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(to bottom right, #eff6ff, #eef2ff);
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .spinner {
+            border: 4px solid #e5e7eb;
+            border-top: 4px solid #4f46e5;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .range-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 8px;
+            border-radius: 5px;
+            background: #E5E7EB;
+            outline: none;
+            position: absolute;
+            pointer-events: none;
+        }
+        
+        .range-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4F46E5;
+            cursor: pointer;
+            pointer-events: all;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 5;
+        }
+        
+        .range-slider::-moz-range-thumb {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: #4F46E5;
+            cursor: pointer;
+            pointer-events: all;
+            border: 3px solid white;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            position: relative;
+            z-index: 5;
+        }
+        
+        .range-slider::-webkit-slider-thumb:hover {
+            background: #4338CA;
+            transform: scale(1.1);
+        }
+        
+        .range-slider::-moz-range-thumb:hover {
+            background: #4338CA;
+            transform: scale(1.1);
+        }
+        
+        .range-slider-track {
+            height: 8px;
+            border-radius: 5px;
+            position: absolute;
+            background: #4F46E5;
+            pointer-events: none;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <div id="loading">
+            <div class="spinner"></div>
+            <p style="color: #6b7280;">Cargando aplicación...</p>
+        </div>
+    </div>
+    
+    <!-- React y ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const Icon = ({ name, className = '', size = 24 }) => {
+            const iconRef = useRef(null);
+            
+            useEffect(() => {
+                if (iconRef.current && window.lucide) {
+                    lucide.createIcons();
+                }
+            }, [name]);
+            
+            return React.createElement('i', {
+                ref: iconRef,
+                'data-lucide': name,
+                className: className,
+                style: { width: size + 'px', height: size + 'px', display: 'inline-block' }
+            });
+        };
+
+        const ChartComponent = ({ type, data, options }) => {
+            const canvasRef = useRef(null);
+            const chartRef = useRef(null);
+
+            useEffect(() => {
+                if (canvasRef.current) {
+                    const ctx = canvasRef.current.getContext('2d');
+                    
+                    if (chartRef.current) {
+                        chartRef.current.destroy();
+                    }
+
+                    chartRef.current = new Chart(ctx, {
+                        type: type,
+                        data: data,
+                        options: options
+                    });
+                }
+
+                return () => {
+                    if (chartRef.current) {
+                        chartRef.current.destroy();
+                    }
+                };
+            }, [type, data, options]);
+
+            return <canvas ref={canvasRef}></canvas>;
+        };
+
+        const ElectricConsumptionApp = () => {
+            const [data, setData] = useState([]);
+            const [importHistory, setImportHistory] = useState([]);
+            const [currentImportId, setCurrentImportId] = useState(1);
+            const [editingRow, setEditingRow] = useState(null);
+            const [editedData, setEditedData] = useState({});
+            const [notification, setNotification] = useState(null);
+            const [activeTab, setActiveTab] = useState('upload');
+            const [stats, setStats] = useState({ total: 0, periods: 0, rpus: 0 });
+            
+            const [tableFilters, setTableFilters] = useState({
+                importeRange: [0, 100000],
+                RPU: [],
+                Periodo: [],
+                Dirección: [],
+                Ciudad: [],
+                Estado: [],
+                RFC: []
+            });
+            const [filterSearchTerms, setFilterSearchTerms] = useState({});
+            const [openFilterDropdown, setOpenFilterDropdown] = useState(null);
+            
+            const [filters, setFilters] = useState({
+                montoRange: [0, 100000],
+                estados: [],
+                ciudades: [],
+                rfcs: [],
+                periodos: []
+            });
+            const [openAnalyticsDropdown, setOpenAnalyticsDropdown] = useState(null);
+            const [analyticsSearchTerms, setAnalyticsSearchTerms] = useState({});
+
+            const columns = [
+                'RPU', 'Periodo', 'Nombre', 'Dirección', 'Ciudad', 'Estado', 'RFC', 
+                'Colonia', 'Calle 1', 'Calle 2', 'Base imponible calculada', 'Total DAP', 
+                'IVA calculado', 'Depósitos', 'Total calculado', 'Diferencia total', 
+                'Diferencia IVA', 'Importe total', 'Importe energía total', 'Importe IVA', 
+                'Importe DAP', 'Importe créditos a la factura', 'Diferencia más', 'Diferencia menos',
+                'Fecha desde', 'Fecha hasta', 'Fecha límite de pago'
+            ];
+
+            useEffect(() => {
+                updateStats();
+                if (data.length > 0) {
+                    const range = getMontoRange();
+                    setFilters(prev => ({
+                        ...prev,
+                        montoRange: [range.min, range.max]
+                    }));
+                    setTableFilters(prev => ({
+                        ...prev,
+                        importeRange: [range.min, range.max]
+                    }));
+                }
+            }, [data]);
+
+            const updateStats = () => {
+                const uniqueRPUs = new Set(data.map(row => row.RPU));
+                const uniquePeriods = new Set(data.map(row => row.Periodo));
+                setStats({
+                    total: data.length,
+                    rpus: uniqueRPUs.size,
+                    periods: uniquePeriods.size
+                });
+            };
+
+            const showNotification = (message, type = 'success') => {
+                setNotification({ message, type });
+                setTimeout(() => setNotification(null), 4000);
+            };
+
+            const getMontoRange = () => {
+                if (data.length === 0) return { min: 0, max: 100000 };
+                const montos = data.map(row => parseFloat(row['Importe total']) || 0).filter(m => m > 0);
+                if (montos.length === 0) return { min: 0, max: 100000 };
+                const min = 0;
+                const max = Math.ceil(Math.max(...montos));
+                return { min, max };
+            };
+
+            const processExcelFile = async (file) => {
+                try {
+                    const arrayBuffer = await file.arrayBuffer();
+                    const workbook = XLSX.read(arrayBuffer, { 
+                        cellStyles: true,
+                        cellDates: true,
+                        cellNF: true,
+                        sheetStubs: false
+                    });
+
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    let jsonData = XLSX.utils.sheet_to_json(firstSheet, { 
+                        header: 1,
+                        defval: '',
+                        raw: false
+                    });
+
+                    jsonData = jsonData.slice(18);
+
+                    if (jsonData.length === 0) {
+                        throw new Error('El archivo no contiene datos después de las primeras 18 filas');
+                    }
+
+                    jsonData = jsonData.map(row => {
+                        const newRow = [...row];
+                        const fechaDesde = newRow[92] || '';
+                        const fechaHasta = newRow[93] || '';
+                        const fechaLimitePago = newRow[94] || '';
+                        let filteredRow = newRow.slice(0, 26);
+                        filteredRow.splice(3, 1);
+                        filteredRow.splice(2, 1);
+                        filteredRow.push(fechaDesde, fechaHasta, fechaLimitePago);
+                        return filteredRow;
+                    });
+
+                    const dataRows = jsonData.slice(1);
+
+                    const processedData = dataRows.map(row => {
+                        const obj = { importId: currentImportId };
+                        columns.forEach((col, idx) => {
+                            let value = row[idx] !== undefined ? row[idx] : '';
+                            
+                            if (col === 'Importe total' && value) {
+                                const cleanValue = String(value).replace(/[$,\s]/g, '');
+                                value = parseFloat(cleanValue) || 0;
+                            }
+                            
+                            if (col === 'Periodo' && value) {
+                                const periodoStr = String(value).replace(/\D/g, '');
+                                if (periodoStr.length >= 6) {
+                                    const year = periodoStr.substring(0, 4);
+                                    const month = periodoStr.substring(4, 6);
+                                    value = year + '-' + month;
+                                }
+                            }
+                            
+                            obj[col] = value;
+                        });
+                        return obj;
+                    }).filter(row => row.RPU && row.Periodo);
+
+                    return processedData;
+
+                } catch (error) {
+                    console.error('Error procesando archivo:', error);
+                    throw new Error('Error al procesar el archivo: ' + error.message);
+                }
+            };
+
+            const handleFileUpload = async (event) => {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                try {
+                    const processedData = await processExcelFile(file);
+                    
+                    let addedCount = 0;
+                    let duplicateCount = 0;
+                    const newData = [...data];
+
+                    processedData.forEach(newRow => {
+                        const exists = newData.some(
+                            existing => existing.RPU === newRow.RPU && existing.Periodo === newRow.Periodo
+                        );
+
+                        if (!exists) {
+                            newData.push(newRow);
+                            addedCount++;
+                        } else {
+                            duplicateCount++;
+                        }
+                    });
+
+                    if (addedCount > 0) {
+                        setData(newData);
+                        setImportHistory([...importHistory, {
+                            id: currentImportId,
+                            date: new Date().toLocaleString('es-MX'),
+                            fileName: file.name,
+                            recordsAdded: addedCount
+                        }]);
+                        setCurrentImportId(currentImportId + 1);
+                    }
+
+                    showNotification(
+                        'Importación completada: ' + addedCount + ' registros agregados, ' + duplicateCount + ' duplicados omitidos',
+                        'success'
+                    );
+
+                } catch (error) {
+                    showNotification('Error: ' + error.message, 'error');
+                }
+
+                event.target.value = '';
+            };
+
+            const deleteImport = (importId) => {
+                if (window.confirm('¿Eliminar todos los registros de la importación #' + importId + '?')) {
+                    const filteredData = data.filter(row => row.importId !== importId);
+                    setData(filteredData);
+                    setImportHistory(importHistory.filter(h => h.id !== importId));
+                    showNotification('Importación #' + importId + ' eliminada correctamente', 'success');
+                }
+            };
+
+            const startEdit = (index) => {
+                setEditingRow(index);
+                setEditedData({ ...data[index] });
+            };
+
+            const cancelEdit = () => {
+                setEditingRow(null);
+                setEditedData({});
+            };
+
+            const saveEdit = () => {
+                const newData = [...data];
+                newData[editingRow] = editedData;
+                setData(newData);
+                setEditingRow(null);
+                setEditedData({});
+                showNotification('Registro actualizado correctamente', 'success');
+            };
+
+            const handleEditChange = (field, value) => {
+                setEditedData({ ...editedData, [field]: value });
+            };
+
+            const deleteRow = (index) => {
+                if (window.confirm('¿Eliminar este registro?')) {
+                    const newData = data.filter((_, i) => i !== index);
+                    setData(newData);
+                    showNotification('Registro eliminado correctamente', 'success');
+                }
+            };
+
+            const exportToExcel = () => {
+                const ws = XLSX.utils.json_to_sheet(data.map(row => {
+                    const newObj = {};
+                    Object.keys(row).forEach(key => {
+                        if (key !== 'importId') {
+                            newObj[key] = row[key];
+                        }
+                    });
+                    return newObj;
+                }));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Datos');
+                XLSX.writeFile(wb, 'consumo_electrico_' + new Date().toISOString().split('T')[0] + '.xlsx');
+                showNotification('Archivo exportado correctamente', 'success');
+            };
+
+            const exportFilteredToExcel = () => {
+                const filteredData = getFilteredTableData();
+                const ws = XLSX.utils.json_to_sheet(filteredData.map(row => {
+                    const newObj = {};
+                    Object.keys(row).forEach(key => {
+                        if (key !== 'importId') {
+                            newObj[key] = row[key];
+                        }
+                    });
+                    return newObj;
+                }));
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, 'Datos Filtrados');
+                XLSX.writeFile(wb, 'consumo_electrico_filtrado_' + new Date().toISOString().split('T')[0] + '.xlsx');
+                showNotification('Datos filtrados exportados correctamente', 'success');
+            };
+
+            const getFilteredTableData = () => {
+                return data.filter(row => {
+                    const importe = parseFloat(row['Importe total']) || 0;
+                    const importeMin = tableFilters.importeRange[0];
+                    const importeMax = tableFilters.importeRange[1];
+                    
+                    const matchImporte = importe >= importeMin && importe <= importeMax;
+                    const matchRPU = tableFilters.RPU.length === 0 || tableFilters.RPU.includes(row.RPU);
+                    const matchPeriodo = tableFilters.Periodo.length === 0 || tableFilters.Periodo.includes(row.Periodo);
+                    const matchDireccion = tableFilters.Dirección.length === 0 || tableFilters.Dirección.includes(row.Dirección);
+                    const matchCiudad = tableFilters.Ciudad.length === 0 || tableFilters.Ciudad.includes(row.Ciudad);
+                    const matchEstado = tableFilters.Estado.length === 0 || tableFilters.Estado.includes(row.Estado);
+                    const matchRFC = tableFilters.RFC.length === 0 || tableFilters.RFC.includes(row.RFC);
+                    
+                    return matchImporte && matchRPU && matchPeriodo && matchDireccion && matchCiudad && matchEstado && matchRFC;
+                });
+            };
+
+            const getUniqueValues = (field) => {
+                return [...new Set(data.map(row => row[field]).filter(Boolean))].sort();
+            };
+
+            const getTableFilterOptions = (field) => {
+                const searchTerm = (filterSearchTerms[field] || '').toLowerCase();
+                const allValues = [...new Set(data.map(row => row[field]).filter(Boolean))].sort();
+                
+                if (!searchTerm) return allValues;
+                
+                return allValues.filter(value => 
+                    String(value).toLowerCase().includes(searchTerm)
+                );
+            };
+
+            const getAnalyticsFilterOptions = (field) => {
+                const searchTerm = (analyticsSearchTerms[field] || '').toLowerCase();
+                const allValues = [...new Set(data.map(row => row[field]).filter(Boolean))].sort();
+                
+                if (!searchTerm) return allValues;
+                
+                return allValues.filter(value => 
+                    String(value).toLowerCase().includes(searchTerm)
+                );
+            };
+
+            const toggleFilterValue = (field, value) => {
+                setTableFilters(prev => {
+                    const current = prev[field] || [];
+                    const newValues = current.includes(value)
+                        ? current.filter(v => v !== value)
+                        : [...current, value];
+                    return { ...prev, [field]: newValues };
+                });
+            };
+
+            const toggleAnalyticsFilterValue = (field, value) => {
+                setFilters(prev => {
+                    const current = prev[field] || [];
+                    const newValues = current.includes(value)
+                        ? current.filter(v => v !== value)
+                        : [...current, value];
+                    return { ...prev, [field]: newValues };
+                });
+            };
+
+            const clearTableFilters = () => {
+                const range = getMontoRange();
+                setTableFilters({
+                    importeRange: [range.min, range.max],
+                    RPU: [],
+                    Periodo: [],
+                    Dirección: [],
+                    Ciudad: [],
+                    Estado: [],
+                    RFC: []
+                });
+                setFilterSearchTerms({});
+            };
+
+            const prepareChartData = () => {
+                const filteredData = data.filter(row => {
+                    const importe = parseFloat(row['Importe total']) || 0;
+                    const [montoMin, montoMax] = filters.montoRange;
+                    
+                    const matchMonto = importe >= montoMin && importe <= montoMax;
+                    const matchEstado = filters.estados.length === 0 || filters.estados.includes(row.Estado);
+                    const matchCiudad = filters.ciudades.length === 0 || filters.ciudades.includes(row.Ciudad);
+                    const matchRFC = filters.rfcs.length === 0 || filters.rfcs.includes(row.RFC);
+                    const matchPeriodo = filters.periodos.length === 0 || filters.periodos.includes(row.Periodo);
+                    
+                    return matchMonto && matchEstado && matchCiudad && matchRFC && matchPeriodo;
+                });
+                
+                const byPeriod = {};
+                filteredData.forEach(row => {
+                    const periodo = row.Periodo || 'Sin periodo';
+                    const importe = parseFloat(row['Importe total']) || 0;
+                    if (!byPeriod[periodo]) {
+                        byPeriod[periodo] = 0;
+                    }
+                    byPeriod[periodo] += importe;
+                });
+                
+                return {
+                    labels: Object.keys(byPeriod).sort(),
+                    values: Object.keys(byPeriod).sort().map(k => Math.round(byPeriod[k])),
+                    filteredCount: filteredData.length
+                };
+            };
+
+            return (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <Icon name="database" size={32} className="text-indigo-600" />
+                                    <div>
+                                        <h1 className="text-3xl font-bold text-gray-800">Sistema de Consumo Eléctrico</h1>
+                                        <p className="text-gray-600 mt-1">Gestión y análisis de datos de facturación</p>
+                                    </div>
+                                </div>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={exportToExcel}
+                                        disabled={data.length === 0}
+                                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                    >
+                                        <Icon name="download" size={16} />
+                                        Exportar Todos
+                                    </button>
+                                    {activeTab === 'data' && (
+                                        <button
+                                            onClick={exportFilteredToExcel}
+                                            disabled={getFilteredTableData().length === 0}
+                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                        >
+                                            <Icon name="filter" size={16} />
+                                            Exportar Filtrados
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {notification && (
+                            <div className={'mb-6 p-4 rounded-lg flex items-center gap-3 ' + (notification.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
+                                <Icon name={notification.type === 'success' ? 'check-circle' : 'alert-circle'} size={20} />
+                                <span className="font-medium">{notification.message}</span>
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="bg-white rounded-lg shadow p-4">
+                                <p className="text-gray-600 text-sm">Total Registros</p>
+                                <p className="text-3xl font-bold text-indigo-600">{stats.total}</p>
+                            </div>
+                            <div className="bg-white rounded-lg shadow p-4">
+                                <p className="text-gray-600 text-sm">RPUs Únicos</p>
+                                <p className="text-3xl font-bold text-blue-600">{stats.rpus}</p>
+                            </div>
+                            <div className="bg-white rounded-lg shadow p-4">
+                                <p className="text-gray-600 text-sm">Periodos</p>
+                                <p className="text-3xl font-bold text-purple-600">{stats.periods}</p>
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                            <div className="flex border-b">
+                                {[
+                                    { id: 'upload', icon: 'upload', label: 'Importar Datos' },
+                                    { id: 'data', icon: 'database', label: 'Ver/Editar Datos' },
+                                    { id: 'analytics', icon: 'bar-chart-3', label: 'Información' }
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        className={'flex-1 px-6 py-4 font-medium transition-colors ' + (activeTab === tab.id ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100')}
+                                    >
+                                        <Icon name={tab.icon} size={20} className="inline mr-2" />
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            <div className="p-6">
+                                {activeTab === 'upload' && (
+                                    <div>
+                                        <div className="border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center hover:border-indigo-500 transition-colors">
+                                            <Icon name="upload" size={64} className="mx-auto text-indigo-400 mb-4" />
+                                            <h3 className="text-xl font-semibold text-gray-700 mb-2">Subir Archivo Excel</h3>
+                                            <p className="text-gray-600 mb-4">Selecciona un archivo .xlsx o .xls con datos de consumo eléctrico</p>
+                                            <label className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg cursor-pointer hover:bg-indigo-700 transition-colors">
+                                                Seleccionar Archivo
+                                                <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
+                                            </label>
+                                        </div>
+
+                                        {importHistory.length > 0 && (
+                                            <div className="mt-6">
+                                                <h3 className="text-lg font-semibold text-gray-800 mb-3">Historial de Importaciones</h3>
+                                                <div className="space-y-2">
+                                                    {importHistory.map(imp => (
+                                                        <div key={imp.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                                                            <div>
+                                                                <p className="font-medium text-gray-800">Importación #{imp.id} - {imp.fileName}</p>
+                                                                <p className="text-sm text-gray-600">{imp.date} • {imp.recordsAdded} registros agregados</p>
+                                                            </div>
+                                                            <button onClick={() => deleteImport(imp.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                                                <Icon name="trash-2" size={20} />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {activeTab === 'data' && (
+                                    <div>
+                                        {data.length === 0 ? (
+                                            <div className="text-center py-12">
+                                                <Icon name="database" size={64} className="mx-auto text-gray-300 mb-4" />
+                                                <p className="text-gray-500 text-lg">No hay datos disponibles</p>
+                                                <p className="text-gray-400 mt-2">Importa un archivo Excel para comenzar</p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                                                    <div className="flex items-center justify-between mb-3">
+                                                        <div className="flex items-center gap-2">
+                                                            <Icon name="filter" size={20} className="text-indigo-600" />
+                                                            <h3 className="text-lg font-semibold text-gray-800">Filtros de Tabla</h3>
+                                                        </div>
+                                                        <button onClick={clearTableFilters} className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                                                            Limpiar Filtros
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                                        <div className="col-span-1 md:col-span-2">
+                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Importe Total</label>
+                                                            <div className="flex gap-2 mb-2">
+                                                                <input
+                                                                    type="number"
+                                                                    value={tableFilters.importeRange[0]}
+                                                                    onChange={(e) => {
+                                                                        const newMin = parseFloat(e.target.value) || 0;
+                                                                        setTableFilters(prev => ({
+                                                                            ...prev, importeRange: [Math.max(0, newMin), prev.importeRange[1]]
+                                                                        }));
+                                                                    }}
+                                                                    className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                                                    placeholder="Mínimo"
+                                                                />
+                                                                <input
+                                                                    type="number"
+                                                                    value={tableFilters.importeRange[1]}
+                                                                    onChange={(e) => {
+                                                                        const newMax = parseFloat(e.target.value) || getMontoRange().max;
+                                                                        setTableFilters(prev => ({
+                                                                            ...prev,
+                                                                            importeRange: [prev.importeRange[0], newMax]
+                                                                        }));
+                                                                    }}
+                                                                    className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                                                    placeholder="Máximo"
+                                                                />
+                                                            </div>
+                                                        </div>
+
+                                                        {['RPU', 'Periodo', 'Dirección', 'Ciudad', 'Estado', 'RFC'].map(field => (
+                                                            <div key={field} className="relative">
+                                                                <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                                                                <button
+                                                                    onClick={() => setOpenFilterDropdown(openFilterDropdown === field ? null : field)}
+                                                                    className="w-full px-3 py-2 text-sm text-left bg-white border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 flex items-center justify-between"
+                                                                >
+                                                                    <span className="truncate">
+                                                                        {tableFilters[field].length === 0
+                                                                            ? 'Todos (' + getUniqueValues(field).length + ')'
+                                                                            : tableFilters[field].length + ' seleccionados'
+                                                                        }
+                                                                    </span>
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                    </svg>
+                                                                </button>
+                                                                
+                                                                {openFilterDropdown === field && (
+                                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                                                                        <div className="p-2 border-b">
+                                                                            <input
+                                                                                type="text"
+                                                                                value={filterSearchTerms[field] || ''}
+                                                                                onChange={(e) => setFilterSearchTerms(prev => ({...prev, [field]: e.target.value}))}
+                                                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                                                                placeholder="Buscar..."
+                                                                            />
+                                                                        </div>
+                                                                        <div className="max-h-44 overflow-y-auto">
+                                                                            {getTableFilterOptions(field).map(value => (
+                                                                                <label key={value} className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={tableFilters[field].includes(value)}
+                                                                                        onChange={() => toggleFilterValue(field, value)}
+                                                                                        className="mr-2"
+                                                                                    />
+                                                                                    <span className="text-sm text-gray-700 truncate">{value}</span>
+                                                                                </label>
+                                                                            ))}
+                                                                            {getTableFilterOptions(field).length === 0 && (
+                                                                                <p className="px-3 py-2 text-sm text-gray-500">No hay coincidencias</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    
+                                                    <p className="text-sm text-gray-600 mt-3">
+                                                        Mostrando <span className="font-semibold text-indigo-600">{getFilteredTableData().length}</span> de {data.length} registros
+                                                    </p>
+                                                </div>
+
+                                                <div className="overflow-x-auto">
+                                                    <table className="w-full text-sm">
+                                                        <thead className="bg-gray-50 border-b-2 border-gray-200">
+                                                            <tr>
+                                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Acciones</th>
+                                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Import</th>
+                                                                {['RPU', 'Periodo', 'Nombre', 'Dirección', 'Ciudad', 'Estado', 'Importe total', 'Fecha desde', 'Fecha hasta', 'Fecha límite de pago'].map(col => (
+                                                                    <th key={col} className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">{col}</th>
+                                                                ))}
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody className="divide-y divide-gray-200">
+                                                            {getFilteredTableData().map((row, idx) => {
+                                                                const originalIndex = data.indexOf(row);
+                                                                return (
+                                                                    <tr key={idx} className="hover:bg-gray-50">
+                                                                        <td className="px-4 py-3">
+                                                                            {editingRow === originalIndex ? (
+                                                                                <div className="flex gap-2">
+                                                                                    <button onClick={saveEdit} className="p-1 text-green-600 hover:bg-green-50 rounded">
+                                                                                        <Icon name="save" size={16} />
+                                                                                    </button>
+                                                                                    <button onClick={cancelEdit} className="p-1 text-gray-600 hover:bg-gray-100 rounded">
+                                                                                        <Icon name="x" size={16} />
+                                                                                    </button>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="flex gap-2">
+                                                                                    <button onClick={() => startEdit(originalIndex)} className="p-1 text-blue-600 hover:bg-blue-50 rounded">
+                                                                                        <Icon name="edit-2" size={16} />
+                                                                                    </button>
+                                                                                    <button onClick={() => deleteRow(originalIndex)} className="p-1 text-red-600 hover:bg-red-50 rounded">
+                                                                                        <Icon name="trash-2" size={16} />
+                                                                                    </button>
+                                                                                </div>
+                                                                            )}
+                                                                        </td>
+                                                                        <td className="px-4 py-3 text-gray-600">#{row.importId}</td>
+                                                                        {['RPU', 'Periodo', 'Nombre', 'Dirección', 'Ciudad', 'Estado', 'Importe total', 'Fecha desde', 'Fecha hasta', 'Fecha límite de pago'].map(col => (
+                                                                            <td key={col} className="px-4 py-3">
+                                                                                {editingRow === originalIndex ? (
+                                                                                    <input
+                                                                                        type="text"
+                                                                                        value={editedData[col] || ''}
+                                                                                        onChange={(e) => handleEditChange(col, e.target.value)}
+                                                                                        className="w-full px-2 py-1 border border-gray-300 rounded"
+                                                                                    />
+                                                                                ) : (
+                                                                                    <span className="text-gray-700">
+                                                                                        {col === 'Importe total' 
+                                                                                            ? '$' + parseFloat(row[col] || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+                                                                                            : row[col]
+                                                                                        }
+                                                                                    </span>
+                                                                                )}
+                                                                            </td>
+                                                                        ))}
+                                                                    </tr>
+                                                                );
+                                                            })}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {activeTab === 'analytics' && (
+                                    <div>
+                                        {data.length === 0 ? (
+                                            <div className="text-center py-12">
+                                                <Icon name="bar-chart-3" size={64} className="mx-auto text-gray-300 mb-4" />
+                                                <p className="text-gray-500 text-lg">No hay datos para analizar</p>
+                                                <p className="text-gray-400 mt-2">Importa datos para ver gráficos</p>
+                                            </div>
+                                        ) : (
+                                            <div>
+                                                <div className="bg-gray-50 rounded-lg p-6 mb-6">
+                                                    <div className="flex items-center gap-2 mb-4">
+                                                        <Icon name="filter" size={20} className="text-indigo-600" />
+                                                        <h3 className="text-lg font-semibold text-gray-800">Filtros de Análisis</h3>
+                                                    </div>
+                                                    
+                                                    {/* Filtro de Rango de Importe Total */}
+                                                    <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
+                                                        <label className="block text-sm font-medium text-gray-700 mb-3">Rango de Importe Total</label>
+                                                        <div className="space-y-2">
+                                                            <div className="flex gap-4 mb-4">
+                                                                <div className="flex-1">
+                                                                    <label className="block text-xs text-gray-600 mb-1">Mínimo</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={'$' + filters.montoRange[0].toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                                        onChange={(e) => {
+                                                                            const cleanValue = e.target.value.replace(/[$,\s]/g, '');
+                                                                            const newMin = parseFloat(cleanValue) || 0;
+                                                                            setFilters({...filters, montoRange: [Math.max(0, Math.min(newMin, getMontoRange().max)), filters.montoRange[1]]});
+                                                                        }}
+                                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                                                        placeholder="$0.00"
+                                                                    />
+                                                                </div>
+                                                                <div className="flex-1">
+                                                                    <label className="block text-xs text-gray-600 mb-1">Máximo</label>
+                                                                    <input
+                                                                        type="text"
+                                                                        value={'$' + filters.montoRange[1].toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                                        onChange={(e) => {
+                                                                            const cleanValue = e.target.value.replace(/[$,\s]/g, '');
+                                                                            const newMax = parseFloat(cleanValue) || getMontoRange().max;
+                                                                            setFilters({...filters, montoRange: [filters.montoRange[0], Math.min(newMax, getMontoRange().max)]});
+                                                                        }}
+                                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                                                        placeholder={'$' + getMontoRange().max.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+                                                                    />
+                                                                </div>
+                                                            </div>
+                                                            <div className="relative pt-1 pb-6">
+                                                                <div 
+                                                                    className="range-slider-track"
+                                                                    style={{
+                                                                        left: (filters.montoRange[0] / getMontoRange().max) * 100 + '%',
+                                                                        right: (100 - (filters.montoRange[1] / getMontoRange().max) * 100) + '%'
+                                                                    }}
+                                                                />
+                                                                
+                                                                <input
+                                                                    type="range"
+                                                                    min={getMontoRange().min}
+                                                                    max={getMontoRange().max}
+                                                                    value={filters.montoRange[0]}
+                                                                    onChange={(e) => {
+                                                                        const newMin = parseFloat(e.target.value);
+                                                                        if (newMin <= filters.montoRange[1]) {
+                                                                            setFilters({...filters, montoRange: [newMin, filters.montoRange[1]]});
+                                                                        }
+                                                                    }}
+                                                                    className="range-slider"
+                                                                    style={{ zIndex: 6 }}
+                                                                />
+                                                                
+                                                                <input
+                                                                    type="range"
+                                                                    min={getMontoRange().min}
+                                                                    max={getMontoRange().max}
+                                                                    value={filters.montoRange[1]}
+                                                                    onChange={(e) => {
+                                                                        const newMax = parseFloat(e.target.value);
+                                                                        if (newMax >= filters.montoRange[0]) {
+                                                                            setFilters({...filters, montoRange: [filters.montoRange[0], newMax]});
+                                                                        }
+                                                                    }}
+                                                                    className="range-slider"
+                                                                    style={{ zIndex: 6 }}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    {/* Filtros con Checkboxes */}
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                                        {[
+                                                            { field: 'estados', label: 'Estado', dataField: 'Estado' },
+                                                            { field: 'ciudades', label: 'Ciudad', dataField: 'Ciudad' },
+                                                            { field: 'rfcs', label: 'RFC', dataField: 'RFC' },
+                                                            { field: 'periodos', label: 'Periodo', dataField: 'Periodo' }
+                                                        ].map(({ field, label, dataField }) => (
+                                                            <div key={field} className="relative">
+                                                                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                                                                <button
+                                                                    onClick={() => setOpenAnalyticsDropdown(openAnalyticsDropdown === field ? null : field)}
+                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm text-left bg-white flex items-center justify-between"
+                                                                >
+                                                                    <span className="truncate">
+                                                                        {filters[field].length === 0
+                                                                            ? 'Todos (' + getUniqueValues(dataField).length + ')'
+                                                                            : filters[field].length + ' seleccionados'
+                                                                        }
+                                                                    </span>
+                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                    </svg>
+                                                                </button>
+                                                                
+                                                                {openAnalyticsDropdown === field && (
+                                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
+                                                                        <div className="p-2 border-b">
+                                                                            <input
+                                                                                type="text"
+                                                                                value={analyticsSearchTerms[field] || ''}
+                                                                                onChange={(e) => setAnalyticsSearchTerms(prev => ({...prev, [field]: e.target.value}))}
+                                                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                                                                placeholder="Buscar..."
+                                                                            />
+                                                                        </div>
+                                                                        <div className="max-h-44 overflow-y-auto">
+                                                                            {getAnalyticsFilterOptions(dataField).map(value => (
+                                                                                <label key={value} className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                                                                                    <input
+                                                                                        type="checkbox"
+                                                                                        checked={filters[field].includes(value)}
+                                                                                        onChange={() => toggleAnalyticsFilterValue(field, value)}
+                                                                                        className="mr-2"
+                                                                                    />
+                                                                                    <span className="text-sm text-gray-700 truncate">{value}</span>
+                                                                                </label>
+                                                                            ))}
+                                                                            {getAnalyticsFilterOptions(dataField).length === 0 && (
+                                                                                <p className="px-3 py-2 text-sm text-gray-500">No hay coincidencias</p>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+
+                                                    <div className="flex items-center justify-between">
+                                                        <p className="text-sm text-gray-600">
+                                                            Mostrando <span className="font-semibold text-indigo-600">{prepareChartData().filteredCount}</span> de {data.length} registros
+                                                        </p>
+                                                        <button
+                                                            onClick={() => {
+                                                                const range = getMontoRange();
+                                                                setFilters({
+                                                                    montoRange: [range.min, range.max],
+                                                                    estados: [],
+                                                                    ciudades: [],
+                                                                    rfcs: [],
+                                                                    periodos: []
+                                                                });
+                                                            }}
+                                                            className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                                        >
+                                                            Limpiar Filtros
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
+                                                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Suma de Importe Total por Periodo</h3>
+                                                    <div style={{height: '400px'}}>
+                                                        <ChartComponent
+                                                            type="bar"
+                                                            data={{
+                                                                labels: prepareChartData().labels,
+                                                                datasets: [{
+                                                                    label: 'Importe Total',
+                                                                    data: prepareChartData().values,
+                                                                    backgroundColor: '#4F46E5',
+                                                                    borderColor: '#4338CA',
+                                                                    borderWidth: 1
+                                                                }]
+                                                            }}
+                                                            options={{
+                                                                responsive: true,
+                                                                maintainAspectRatio: false,
+                                                                plugins: {
+                                                                    legend: { 
+                                                                        display: true,
+                                                                        position: 'top'
+                                                                    },
+                                                                    tooltip: {
+                                                                        callbacks: {
+                                                                            label: (context) => 'Importe Total: $' + context.parsed.y.toLocaleString('es-MX')
+                                                                        }
+                                                                    }
+                                                                },
+                                                                scales: {
+                                                                    y: {
+                                                                        beginAtZero: true,
+                                                                        ticks: {
+                                                                            callback: (value) => '$' + (value / 1000).toFixed(0) + 'k'
+                                                                        }
+                                                                    },
+                                                                    x: {
+                                                                        ticks: {
+                                                                            maxRotation: 45,
+                                                                            minRotation: 45
+                                                                        }
+                                                                    }
+                                                                }
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div className="bg-white rounded-lg shadow-lg p-6">
+                                                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Resumen Estadístico</h3>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                        {(() => {
+                                                            const filtered = data.filter(row => {
+                                                                const importe = parseFloat(row['Importe total']) || 0;
+                                                                const [montoMin, montoMax] = filters.montoRange;
+                                                                
+                                                                const matchMonto = importe >= montoMin && importe <= montoMax;
+                                                                const matchEstado = filters.estados.length === 0 || filters.estados.includes(row.Estado);
+                                                                const matchCiudad = filters.ciudades.length === 0 || filters.ciudades.includes(row.Ciudad);
+                                                                const matchRFC = filters.rfcs.length === 0 || filters.rfcs.includes(row.RFC);
+                                                                const matchPeriodo = filters.periodos.length === 0 || filters.periodos.includes(row.Periodo);
+                                                                
+                                                                return matchMonto && matchEstado && matchCiudad && matchRFC && matchPeriodo;
+                                                            });
+                                                            const totales = filtered.map(r => parseFloat(r['Importe total']) || 0);
+                                                            const suma = totales.reduce((a, b) => a + b, 0);
+                                                            const promedio = suma / totales.length || 0;
+                                                            const max = Math.max(...totales, 0);
+                                                            const min = totales.length > 0 ? Math.min(...totales.filter(t => t > 0)) : 0;
+                                                            
+                                                            return (
+                                                                <React.Fragment>
+                                                                    <div className="bg-indigo-50 rounded-lg p-4">
+                                                                        <p className="text-sm text-gray-600 mb-1">Total Facturado</p>
+                                                                        <p className="text-2xl font-bold text-indigo-600">{'$' + suma.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
+                                                                    </div>
+                                                                    <div className="bg-blue-50 rounded-lg p-4">
+                                                                        <p className="text-sm text-gray-600 mb-1">Promedio</p>
+                                                                        <p className="text-2xl font-bold text-blue-600">{'$' + promedio.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
+                                                                    </div>
+                                                                    <div className="bg-green-50 rounded-lg p-4">
+                                                                        <p className="text-sm text-gray-600 mb-1">Máximo</p>
+                                                                        <p className="text-2xl font-bold text-green-600">{'$' + max.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
+                                                                    </div>
+                                                                    <div className="bg-orange-50 rounded-lg p-4">
+                                                                        <p className="text-sm text-gray-600 mb-1">Mínimo</p>
+                                                                        <p className="text-2xl font-bold text-orange-600">{'$' + min.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
+                                                                    </div>
+                                                                </React.Fragment>
+                                                            );
+                                                        })()}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ElectricConsumptionApp />);
+    </script>
+</body>
+</html>
