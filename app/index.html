@@ -9,9 +9,15 @@
     <script src="https://cdn.tailwindcss.com"></script>
     
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
         body {
             margin: 0;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
         }
         
         #loading {
@@ -19,18 +25,18 @@
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            background: linear-gradient(to bottom right, #eff6ff, #eef2ff);
+            background: linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%);
             flex-direction: column;
-            gap: 1rem;
+            gap: 1.5rem;
         }
         
         .spinner {
-            border: 4px solid #e5e7eb;
-            border-top: 4px solid #4f46e5;
+            border: 3px solid rgba(236, 28, 36, 0.1);
+            border-top: 3px solid #ec1c24;
             border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
+            width: 48px;
+            height: 48px;
+            animation: spin 0.8s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
         }
         
         @keyframes spin {
@@ -38,13 +44,32 @@
             100% { transform: rotate(360deg); }
         }
 
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        }
+
+        .neo-shadow {
+            box-shadow: 
+                8px 8px 16px rgba(96, 96, 96, 0.1),
+                -8px -8px 16px rgba(255, 255, 255, 0.9);
+        }
+
+        .neo-inset {
+            box-shadow: 
+                inset 4px 4px 8px rgba(96, 96, 96, 0.1),
+                inset -4px -4px 8px rgba(255, 255, 255, 0.9);
+        }
+
         .range-slider {
             -webkit-appearance: none;
             appearance: none;
             width: 100%;
-            height: 8px;
-            border-radius: 5px;
-            background: #E5E7EB;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(to right, #f0f0f0, #e0e0e0);
             outline: none;
             position: absolute;
             pointer-events: none;
@@ -53,56 +78,205 @@
         .range-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
             appearance: none;
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            background: #4F46E5;
+            background: linear-gradient(135deg, #ec1c24, #ff4d54);
             cursor: pointer;
             pointer-events: all;
-            border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            border: 2px solid white;
+            box-shadow: 0 4px 12px rgba(236, 28, 36, 0.3);
             position: relative;
             z-index: 5;
+            transition: all 0.2s ease;
         }
         
         .range-slider::-moz-range-thumb {
-            width: 24px;
-            height: 24px;
+            width: 20px;
+            height: 20px;
             border-radius: 50%;
-            background: #4F46E5;
+            background: linear-gradient(135deg, #ec1c24, #ff4d54);
             cursor: pointer;
             pointer-events: all;
-            border: 3px solid white;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+            border: 2px solid white;
+            box-shadow: 0 4px 12px rgba(236, 28, 36, 0.3);
             position: relative;
             z-index: 5;
+            transition: all 0.2s ease;
         }
         
         .range-slider::-webkit-slider-thumb:hover {
-            background: #4338CA;
-            transform: scale(1.1);
+            transform: scale(1.15);
+            box-shadow: 0 6px 16px rgba(236, 28, 36, 0.4);
         }
         
         .range-slider::-moz-range-thumb:hover {
-            background: #4338CA;
-            transform: scale(1.1);
+            transform: scale(1.15);
+            box-shadow: 0 6px 16px rgba(236, 28, 36, 0.4);
         }
         
         .range-slider-track {
-            height: 8px;
-            border-radius: 5px;
+            height: 6px;
+            border-radius: 3px;
             position: absolute;
-            background: #4F46E5;
+            background: linear-gradient(90deg, #ec1c24, #ff4d54);
             pointer-events: none;
             z-index: 2;
         }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #ec1c24, #ff4d54);
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #d01920, #ec1c24);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(236, 28, 36, 0.3);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #10b981, #14dc8e);
+            transition: all 0.3s ease;
+        }
+
+        .btn-success:hover:not(:disabled) {
+            background: linear-gradient(135deg, #0ea373, #10b981);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ef4444, #f87171);
+            transition: all 0.3s ease;
+        }
+
+        .btn-danger:hover:not(:disabled) {
+            background: linear-gradient(135deg, #dc2626, #ef4444);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(239, 68, 68, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #606060, #787878);
+            transition: all 0.3s ease;
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: linear-gradient(135deg, #505050, #606060);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(96, 96, 96, 0.3);
+        }
+
+        .accent-border {
+            border-left: 4px solid #ec1c24;
+        }
+
+        .glow-effect {
+            animation: glow 2s ease-in-out infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(236, 28, 36, 0.2); }
+            50% { box-shadow: 0 0 30px rgba(236, 28, 36, 0.4); }
+        }
+
+        input:focus, select:focus, button:focus {
+            outline: none;
+            border-color: #ec1c24;
+            box-shadow: 0 0 0 3px rgba(236, 28, 36, 0.1);
+        }
+
+        .table-hover:hover {
+            background: linear-gradient(90deg, rgba(236, 28, 36, 0.03), transparent);
+            transform: translateX(2px);
+            transition: all 0.2s ease;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(236, 28, 36, 0.15);
+        }
+
+        .notification-enter {
+            animation: slideIn 0.3s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateY(-100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .futuristic-tab {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .futuristic-tab::before {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #ec1c24, #ff4d54);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .futuristic-tab.active::before {
+            transform: scaleX(1);
+        }
+
+        .dropdown-modern {
+            animation: dropdownFade 0.2s ease-out;
+        }
+
+        @keyframes dropdownFade {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ec1c24',
+                        secondary: '#606060',
+                        success: '#10b981',
+                        danger: '#ef4444',
+                        warning: '#f59e0b',
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 <body>
     <div id="root">
         <div id="loading">
             <div class="spinner"></div>
-            <p style="color: #6b7280;">Cargando aplicación...</p>
+            <p style="color: #606060; font-weight: 500; letter-spacing: 0.5px;">Cargando sistema...</p>
         </div>
     </div>
     
@@ -550,33 +724,38 @@
             };
 
             return (
-                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 p-6">
+                <div className="min-h-screen p-6" style={{background: 'linear-gradient(135deg, #ffffff 0%, #f5f5f5 100%)'}}>
                     <div className="max-w-7xl mx-auto">
-                        <div className="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        {/* Header */}
+                        <div className="glass-effect neo-shadow rounded-2xl p-6 mb-6">
                             <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-3">
-                                    <Icon name="database" size={32} className="text-indigo-600" />
+                                <div className="flex items-center gap-4">
+                                    <div className="p-3 rounded-xl" style={{background: 'linear-gradient(135deg, #ec1c24, #ff4d54)'}}>
+                                        <Icon name="zap" size={32} className="text-white" />
+                                    </div>
                                     <div>
-                                        <h1 className="text-3xl font-bold text-gray-800">Sistema de Consumo Eléctrico</h1>
-                                        <p className="text-gray-600 mt-1">Gestión y análisis de datos de facturación</p>
+                                        <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent">
+                                            Sistema de Consumo Eléctrico
+                                        </h1>
+                                        <p className="text-secondary mt-1" style={{letterSpacing: '0.5px'}}>Gestión inteligente de datos de facturación</p>
                                     </div>
                                 </div>
-                                <div className="flex gap-2">
+                                <div className="flex gap-3">
                                     <button
                                         onClick={exportToExcel}
                                         disabled={data.length === 0}
-                                        className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                        className="btn-success flex items-center gap-2 px-5 py-2.5 text-white rounded-xl font-medium disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
                                     >
-                                        <Icon name="download" size={16} />
+                                        <Icon name="download" size={18} />
                                         Exportar Todos
                                     </button>
                                     {activeTab === 'data' && (
                                         <button
                                             onClick={exportFilteredToExcel}
                                             disabled={getFilteredTableData().length === 0}
-                                            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+                                            className="btn-primary flex items-center gap-2 px-5 py-2.5 text-white rounded-xl font-medium disabled:opacity-40 disabled:cursor-not-allowed shadow-lg"
                                         >
-                                            <Icon name="filter" size={16} />
+                                            <Icon name="filter" size={18} />
                                             Exportar Filtrados
                                         </button>
                                     )}
@@ -584,39 +763,64 @@
                             </div>
                         </div>
 
+                        {/* Notification */}
                         {notification && (
-                            <div className={'mb-6 p-4 rounded-lg flex items-center gap-3 ' + (notification.type === 'success' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800')}>
-                                <Icon name={notification.type === 'success' ? 'check-circle' : 'alert-circle'} size={20} />
-                                <span className="font-medium">{notification.message}</span>
+                            <div className={'notification-enter mb-6 p-4 rounded-xl flex items-center gap-3 shadow-lg ' + (notification.type === 'success' ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500' : notification.type === 'error' ? 'bg-gradient-to-r from-red-50 to-rose-50 border-l-4 border-red-500' : 'bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-500')}>
+                                <Icon name={notification.type === 'success' ? 'check-circle' : notification.type === 'error' ? 'alert-circle' : 'alert-triangle'} size={20} className={notification.type === 'success' ? 'text-green-600' : notification.type === 'error' ? 'text-red-600' : 'text-yellow-600'} />
+                                <span className="font-medium text-gray-800">{notification.message}</span>
                             </div>
                         )}
 
-                        <div className="grid grid-cols-3 gap-4 mb-6">
-                            <div className="bg-white rounded-lg shadow p-4">
-                                <p className="text-gray-600 text-sm">Total Registros</p>
-                                <p className="text-3xl font-bold text-indigo-600">{stats.total}</p>
+                        {/* Stats Cards */}
+                        <div className="grid grid-cols-3 gap-6 mb-6">
+                            <div className="stat-card rounded-2xl p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-secondary text-sm font-medium mb-1">Total Registros</p>
+                                        <p className="text-4xl font-bold" style={{background: 'linear-gradient(135deg, #ec1c24, #ff4d54)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>{stats.total}</p>
+                                    </div>
+                                    <div className="p-4 rounded-xl" style={{background: 'linear-gradient(135deg, rgba(236, 28, 36, 0.1), rgba(255, 77, 84, 0.1))'}}>
+                                        <Icon name="database" size={28} style={{color: '#ec1c24'}} />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="bg-white rounded-lg shadow p-4">
-                                <p className="text-gray-600 text-sm">RPUs Únicos</p>
-                                <p className="text-3xl font-bold text-blue-600">{stats.rpus}</p>
+                            <div className="stat-card rounded-2xl p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-secondary text-sm font-medium mb-1">RPUs Únicos</p>
+                                        <p className="text-4xl font-bold" style={{background: 'linear-gradient(135deg, #606060, #787878)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>{stats.rpus}</p>
+                                    </div>
+                                    <div className="p-4 rounded-xl" style={{background: 'linear-gradient(135deg, rgba(96, 96, 96, 0.1), rgba(120, 120, 120, 0.1))'}}>
+                                        <Icon name="users" size={28} style={{color: '#606060'}} />
+                                    </div>
+                                </div>
                             </div>
-                            <div className="bg-white rounded-lg shadow p-4">
-                                <p className="text-gray-600 text-sm">Periodos</p>
-                                <p className="text-3xl font-bold text-purple-600">{stats.periods}</p>
+                            <div className="stat-card rounded-2xl p-6">
+                                <div className="flex items-center justify-between">
+                                    <div>
+                                        <p className="text-secondary text-sm font-medium mb-1">Periodos</p>
+                                        <p className="text-4xl font-bold" style={{background: 'linear-gradient(135deg, #ec1c24, #ff4d54)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent'}}>{stats.periods}</p>
+                                    </div>
+                                    <div className="p-4 rounded-xl" style={{background: 'linear-gradient(135deg, rgba(236, 28, 36, 0.1), rgba(255, 77, 84, 0.1))'}}>
+                                        <Icon name="calendar" size={28} style={{color: '#ec1c24'}} />
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-                            <div className="flex border-b">
+                        {/* Main Content */}
+                        <div className="glass-effect neo-shadow rounded-2xl overflow-hidden">
+                            {/* Tabs */}
+                            <div className="flex border-b" style={{borderColor: 'rgba(96, 96, 96, 0.1)'}}>
                                 {[
                                     { id: 'upload', icon: 'upload', label: 'Importar Datos' },
-                                    { id: 'data', icon: 'database', label: 'Ver/Editar Datos' },
+                                    { id: 'data', icon: 'table-2', label: 'Ver/Editar Datos' },
                                     { id: 'analytics', icon: 'bar-chart-3', label: 'Información' }
                                 ].map(tab => (
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
-                                        className={'flex-1 px-6 py-4 font-medium transition-colors ' + (activeTab === tab.id ? 'bg-indigo-600 text-white' : 'bg-gray-50 text-gray-700 hover:bg-gray-100')}
+                                        className={'futuristic-tab flex-1 px-6 py-4 font-medium transition-all ' + (activeTab === tab.id ? 'active text-primary bg-gradient-to-b from-transparent to-red-50' : 'text-secondary hover:text-gray-800 hover:bg-gray-50')}
                                     >
                                         <Icon name={tab.icon} size={20} className="inline mr-2" />
                                         {tab.label}
@@ -624,31 +828,37 @@
                                 ))}
                             </div>
 
+                            {/* Tab Content */}
                             <div className="p-6">
                                 {activeTab === 'upload' && (
                                     <div>
-                                        <div className="border-2 border-dashed border-indigo-300 rounded-lg p-8 text-center hover:border-indigo-500 transition-colors">
-                                            <Icon name="upload" size={64} className="mx-auto text-indigo-400 mb-4" />
-                                            <h3 className="text-xl font-semibold text-gray-700 mb-2">Subir Archivo Excel</h3>
-                                            <p className="text-gray-600 mb-4">Selecciona un archivo .xlsx o .xls con datos de consumo eléctrico</p>
-                                            <label className="inline-block px-6 py-3 bg-indigo-600 text-white rounded-lg cursor-pointer hover:bg-indigo-700 transition-colors">
+                                        <div className="border-2 border-dashed rounded-2xl p-12 text-center hover:border-primary transition-all cursor-pointer neo-inset" style={{borderColor: 'rgba(236, 28, 36, 0.2)'}}>
+                                            <div className="inline-block p-6 rounded-2xl mb-4" style={{background: 'linear-gradient(135deg, rgba(236, 28, 36, 0.05), rgba(255, 77, 84, 0.05))'}}>
+                                                <Icon name="upload-cloud" size={64} style={{color: '#ec1c24'}} />
+                                            </div>
+                                            <h3 className="text-2xl font-bold text-gray-800 mb-2">Subir Archivo Excel</h3>
+                                            <p className="text-secondary mb-6">Selecciona un archivo .xlsx o .xls con datos de consumo eléctrico</p>
+                                            <label className="inline-block btn-primary px-8 py-3 text-white rounded-xl cursor-pointer font-medium shadow-lg">
                                                 Seleccionar Archivo
                                                 <input type="file" accept=".xlsx,.xls" onChange={handleFileUpload} className="hidden" />
                                             </label>
                                         </div>
 
                                         {importHistory.length > 0 && (
-                                            <div className="mt-6">
-                                                <h3 className="text-lg font-semibold text-gray-800 mb-3">Historial de Importaciones</h3>
-                                                <div className="space-y-2">
+                                            <div className="mt-8">
+                                                <h3 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                                                    <Icon name="history" size={24} style={{color: '#ec1c24'}} />
+                                                    Historial de Importaciones
+                                                </h3>
+                                                <div className="space-y-3">
                                                     {importHistory.map(imp => (
-                                                        <div key={imp.id} className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+                                                        <div key={imp.id} className="flex items-center justify-between glass-effect rounded-xl p-4 hover:shadow-lg transition-all accent-border">
                                                             <div>
-                                                                <p className="font-medium text-gray-800">Importación #{imp.id} - {imp.fileName}</p>
-                                                                <p className="text-sm text-gray-600">{imp.date} • {imp.recordsAdded} registros agregados</p>
+                                                                <p className="font-semibold text-gray-800">Importación #{imp.id} - {imp.fileName}</p>
+                                                                <p className="text-sm text-secondary mt-1">{imp.date} • {imp.recordsAdded} registros agregados</p>
                                                             </div>
-                                                            <button onClick={() => deleteImport(imp.id)} className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors">
-                                                                <Icon name="trash-2" size={20} />
+                                                            <button onClick={() => deleteImport(imp.id)} className="btn-danger p-3 rounded-xl shadow-md">
+                                                                <Icon name="trash-2" size={20} className="text-white" />
                                                             </button>
                                                         </div>
                                                     ))}
@@ -661,38 +871,43 @@
                                 {activeTab === 'data' && (
                                     <div>
                                         {data.length === 0 ? (
-                                            <div className="text-center py-12">
-                                                <Icon name="database" size={64} className="mx-auto text-gray-300 mb-4" />
-                                                <p className="text-gray-500 text-lg">No hay datos disponibles</p>
-                                                <p className="text-gray-400 mt-2">Importa un archivo Excel para comenzar</p>
+                                            <div className="text-center py-20">
+                                                <div className="inline-block p-8 rounded-2xl mb-4" style={{background: 'linear-gradient(135deg, rgba(96, 96, 96, 0.05), rgba(120, 120, 120, 0.05))'}}>
+                                                    <Icon name="inbox" size={80} className="text-gray-300" />
+                                                </div>
+                                                <p className="text-gray-500 text-xl font-medium">No hay datos disponibles</p>
+                                                <p className="text-secondary mt-2">Importa un archivo Excel para comenzar</p>
                                             </div>
                                         ) : (
                                             <div>
-                                                <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                                                    <div className="flex items-center justify-between mb-3">
+                                                {/* Filtros */}
+                                                <div className="glass-effect rounded-xl p-5 mb-6 neo-inset">
+                                                    <div className="flex items-center justify-between mb-4">
                                                         <div className="flex items-center gap-2">
-                                                            <Icon name="filter" size={20} className="text-indigo-600" />
-                                                            <h3 className="text-lg font-semibold text-gray-800">Filtros de Tabla</h3>
+                                                            <Icon name="sliders-horizontal" size={22} style={{color: '#ec1c24'}} />
+                                                            <h3 className="text-lg font-bold text-gray-800">Filtros de Tabla</h3>
                                                         </div>
-                                                        <button onClick={clearTableFilters} className="px-3 py-1 text-sm bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition-colors">
+                                                        <button onClick={clearTableFilters} className="btn-secondary px-4 py-2 text-white rounded-lg text-sm font-medium shadow-md">
                                                             Limpiar Filtros
                                                         </button>
                                                     </div>
                                                     
-                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                                                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                                                         <div className="col-span-1 md:col-span-2">
-                                                            <label className="block text-sm font-medium text-gray-700 mb-2">Importe Total</label>
-                                                            <div className="flex gap-2 mb-2">
+                                                            <label className="block text-sm font-semibold text-gray-700 mb-2">Importe Total</label>
+                                                            <div className="flex gap-3">
                                                                 <input
                                                                     type="number"
                                                                     value={tableFilters.importeRange[0]}
                                                                     onChange={(e) => {
                                                                         const newMin = parseFloat(e.target.value) || 0;
                                                                         setTableFilters(prev => ({
-                                                                            ...prev, importeRange: [Math.max(0, newMin), prev.importeRange[1]]
+                                                                            ...prev,
+                                                                            importeRange: [Math.max(0, newMin), prev.importeRange[1]]
                                                                         }));
                                                                     }}
-                                                                    className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                                                    className="flex-1 px-3 py-2 text-sm border rounded-lg transition-all"
+                                                                    style={{borderColor: 'rgba(96, 96, 96, 0.2)'}}
                                                                     placeholder="Mínimo"
                                                                 />
                                                                 <input
@@ -705,7 +920,8 @@
                                                                             importeRange: [prev.importeRange[0], newMax]
                                                                         }));
                                                                     }}
-                                                                    className="flex-1 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500"
+                                                                    className="flex-1 px-3 py-2 text-sm border rounded-lg transition-all"
+                                                                    style={{borderColor: 'rgba(96, 96, 96, 0.2)'}}
                                                                     placeholder="Máximo"
                                                                 />
                                                             </div>
@@ -713,47 +929,48 @@
 
                                                         {['RPU', 'Periodo', 'Dirección', 'Ciudad', 'Estado', 'RFC'].map(field => (
                                                             <div key={field} className="relative">
-                                                                <label className="block text-sm font-medium text-gray-700 mb-1">{field}</label>
+                                                                <label className="block text-sm font-semibold text-gray-700 mb-2">{field}</label>
                                                                 <button
                                                                     onClick={() => setOpenFilterDropdown(openFilterDropdown === field ? null : field)}
-                                                                    className="w-full px-3 py-2 text-sm text-left bg-white border border-gray-300 rounded focus:ring-2 focus:ring-indigo-500 flex items-center justify-between"
+                                                                    className="w-full px-3 py-2 text-sm text-left bg-white border rounded-lg flex items-center justify-between hover:border-primary transition-all"
+                                                                    style={{borderColor: 'rgba(96, 96, 96, 0.2)'}}
                                                                 >
-                                                                    <span className="truncate">
+                                                                    <span className="truncate font-medium">
                                                                         {tableFilters[field].length === 0
                                                                             ? 'Todos (' + getUniqueValues(field).length + ')'
                                                                             : tableFilters[field].length + ' seleccionados'
                                                                         }
                                                                     </span>
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                                    </svg>
+                                                                    <Icon name="chevron-down" size={16} className="text-gray-400" />
                                                                 </button>
                                                                 
                                                                 {openFilterDropdown === field && (
-                                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
-                                                                        <div className="p-2 border-b">
+                                                                    <div className="dropdown-modern absolute z-10 w-full mt-2 bg-white border rounded-xl shadow-2xl max-h-64 overflow-hidden" style={{borderColor: 'rgba(96, 96, 96, 0.1)'}}>
+                                                                        <div className="p-3 border-b" style={{borderColor: 'rgba(96, 96, 96, 0.1)'}}>
                                                                             <input
                                                                                 type="text"
                                                                                 value={filterSearchTerms[field] || ''}
                                                                                 onChange={(e) => setFilterSearchTerms(prev => ({...prev, [field]: e.target.value}))}
-                                                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                                                                className="w-full px-3 py-2 text-sm border rounded-lg"
+                                                                                style={{borderColor: 'rgba(96, 96, 96, 0.2)'}}
                                                                                 placeholder="Buscar..."
                                                                             />
                                                                         </div>
-                                                                        <div className="max-h-44 overflow-y-auto">
+                                                                        <div className="max-h-48 overflow-y-auto">
                                                                             {getTableFilterOptions(field).map(value => (
-                                                                                <label key={value} className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                                                                                <label key={value} className="flex items-center px-4 py-2.5 hover:bg-red-50 cursor-pointer transition-all">
                                                                                     <input
                                                                                         type="checkbox"
                                                                                         checked={tableFilters[field].includes(value)}
                                                                                         onChange={() => toggleFilterValue(field, value)}
-                                                                                        className="mr-2"
+                                                                                        className="mr-3 accent-primary"
+                                                                                        style={{accentColor: '#ec1c24'}}
                                                                                     />
-                                                                                    <span className="text-sm text-gray-700 truncate">{value}</span>
+                                                                                    <span className="text-sm text-gray-700 font-medium truncate">{value}</span>
                                                                                 </label>
                                                                             ))}
                                                                             {getTableFilterOptions(field).length === 0 && (
-                                                                                <p className="px-3 py-2 text-sm text-gray-500">No hay coincidencias</p>
+                                                                                <p className="px-4 py-3 text-sm text-gray-500 text-center">No hay coincidencias</p>
                                                                             )}
                                                                         </div>
                                                                     </div>
@@ -762,49 +979,56 @@
                                                         ))}
                                                     </div>
                                                     
-                                                    <p className="text-sm text-gray-600 mt-3">
-                                                        Mostrando <span className="font-semibold text-indigo-600">{getFilteredTableData().length}</span> de {data.length} registros
-                                                    </p>
+                                                    <div className="mt-4 pt-4 border-t" style={{borderColor: 'rgba(96, 96, 96, 0.1)'}}>
+                                                        <p className="text-sm text-secondary">
+                                                            Mostrando <span className="font-bold text-primary">{getFilteredTableData().length}</span> de {data.length} registros
+                                                        </p>
+                                                    </div>
                                                 </div>
 
-                                                <div className="overflow-x-auto">
+                                                {/* Tabla */}
+                                                <div className="overflow-x-auto rounded-xl" style={{border: '1px solid rgba(96, 96, 96, 0.1)'}}>
                                                     <table className="w-full text-sm">
-                                                        <thead className="bg-gray-50 border-b-2 border-gray-200">
+                                                        <thead style={{background: 'linear-gradient(135deg, #f8f8f8, #ffffff)'}}>
                                                             <tr>
-                                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Acciones</th>
-                                                                <th className="px-4 py-3 text-left font-semibold text-gray-700">Import</th>
+                                                                <th className="px-4 py-4 text-left font-bold text-gray-700">Acciones</th>
+                                                                <th className="px-4 py-4 text-left font-bold text-gray-700">Import</th>
                                                                 {['RPU', 'Periodo', 'Nombre', 'Dirección', 'Ciudad', 'Estado', 'Importe total', 'Fecha desde', 'Fecha hasta', 'Fecha límite de pago'].map(col => (
-                                                                    <th key={col} className="px-4 py-3 text-left font-semibold text-gray-700 whitespace-nowrap">{col}</th>
+                                                                    <th key={col} className="px-4 py-4 text-left font-bold text-gray-700 whitespace-nowrap">{col}</th>
                                                                 ))}
                                                             </tr>
                                                         </thead>
-                                                        <tbody className="divide-y divide-gray-200">
+                                                        <tbody>
                                                             {getFilteredTableData().map((row, idx) => {
                                                                 const originalIndex = data.indexOf(row);
                                                                 return (
-                                                                    <tr key={idx} className="hover:bg-gray-50">
+                                                                    <tr key={idx} className="table-hover" style={{borderBottom: '1px solid rgba(96, 96, 96, 0.05)'}}>
                                                                         <td className="px-4 py-3">
                                                                             {editingRow === originalIndex ? (
                                                                                 <div className="flex gap-2">
-                                                                                    <button onClick={saveEdit} className="p-1 text-green-600 hover:bg-green-50 rounded">
-                                                                                        <Icon name="save" size={16} />
+                                                                                    <button onClick={saveEdit} className="btn-success p-2 rounded-lg shadow-md">
+                                                                                        <Icon name="check" size={16} className="text-white" />
                                                                                     </button>
-                                                                                    <button onClick={cancelEdit} className="p-1 text-gray-600 hover:bg-gray-100 rounded">
-                                                                                        <Icon name="x" size={16} />
+                                                                                    <button onClick={cancelEdit} className="btn-secondary p-2 rounded-lg shadow-md">
+                                                                                        <Icon name="x" size={16} className="text-white" />
                                                                                     </button>
                                                                                 </div>
                                                                             ) : (
                                                                                 <div className="flex gap-2">
-                                                                                    <button onClick={() => startEdit(originalIndex)} className="p-1 text-blue-600 hover:bg-blue-50 rounded">
-                                                                                        <Icon name="edit-2" size={16} />
+                                                                                    <button onClick={() => startEdit(originalIndex)} className="p-2 rounded-lg hover:bg-blue-50 transition-all">
+                                                                                        <Icon name="edit-2" size={16} style={{color: '#606060'}} />
                                                                                     </button>
-                                                                                    <button onClick={() => deleteRow(originalIndex)} className="p-1 text-red-600 hover:bg-red-50 rounded">
-                                                                                        <Icon name="trash-2" size={16} />
+                                                                                    <button onClick={() => deleteRow(originalIndex)} className="p-2 rounded-lg hover:bg-red-50 transition-all">
+                                                                                        <Icon name="trash-2" size={16} style={{color: '#ec1c24'}} />
                                                                                     </button>
                                                                                 </div>
                                                                             )}
                                                                         </td>
-                                                                        <td className="px-4 py-3 text-gray-600">#{row.importId}</td>
+                                                                        <td className="px-4 py-3">
+                                                                            <span className="px-2 py-1 rounded-lg text-xs font-bold" style={{background: 'linear-gradient(135deg, rgba(236, 28, 36, 0.1), rgba(255, 77, 84, 0.1))', color: '#ec1c24'}}>
+                                                                                #{row.importId}
+                                                                            </span>
+                                                                        </td>
                                                                         {['RPU', 'Periodo', 'Nombre', 'Dirección', 'Ciudad', 'Estado', 'Importe total', 'Fecha desde', 'Fecha hasta', 'Fecha límite de pago'].map(col => (
                                                                             <td key={col} className="px-4 py-3">
                                                                                 {editingRow === originalIndex ? (
@@ -812,12 +1036,13 @@
                                                                                         type="text"
                                                                                         value={editedData[col] || ''}
                                                                                         onChange={(e) => handleEditChange(col, e.target.value)}
-                                                                                        className="w-full px-2 py-1 border border-gray-300 rounded"
+                                                                                        className="w-full px-2 py-1 border rounded-lg text-sm"
+                                                                                        style={{borderColor: 'rgba(236, 28, 36, 0.3)'}}
                                                                                     />
                                                                                 ) : (
-                                                                                    <span className="text-gray-700">
+                                                                                    <span className="text-gray-700 font-medium">
                                                                                         {col === 'Importe total' 
-                                                                                            ? '$' + parseFloat(row[col] || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})
+                                                                                            ? <span className="font-bold" style={{color: '#ec1c24'}}>{'$' + parseFloat(row[col] || 0).toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span>
                                                                                             : row[col]
                                                                                         }
                                                                                     </span>
@@ -838,26 +1063,29 @@
                                 {activeTab === 'analytics' && (
                                     <div>
                                         {data.length === 0 ? (
-                                            <div className="text-center py-12">
-                                                <Icon name="bar-chart-3" size={64} className="mx-auto text-gray-300 mb-4" />
-                                                <p className="text-gray-500 text-lg">No hay datos para analizar</p>
-                                                <p className="text-gray-400 mt-2">Importa datos para ver gráficos</p>
+                                            <div className="text-center py-20">
+                                                <div className="inline-block p-8 rounded-2xl mb-4" style={{background: 'linear-gradient(135deg, rgba(96, 96, 96, 0.05), rgba(120, 120, 120, 0.05))'}}>
+                                                    <Icon name="trending-up" size={80} className="text-gray-300" />
+                                                </div>
+                                                <p className="text-gray-500 text-xl font-medium">No hay datos para analizar</p>
+                                                <p className="text-secondary mt-2">Importa datos para ver gráficos y estadísticas</p>
                                             </div>
                                         ) : (
                                             <div>
-                                                <div className="bg-gray-50 rounded-lg p-6 mb-6">
-                                                    <div className="flex items-center gap-2 mb-4">
-                                                        <Icon name="filter" size={20} className="text-indigo-600" />
-                                                        <h3 className="text-lg font-semibold text-gray-800">Filtros de Análisis</h3>
+                                                {/* Filtros Analytics */}
+                                                <div className="glass-effect rounded-xl p-6 mb-6 neo-inset">
+                                                    <div className="flex items-center gap-2 mb-5">
+                                                        <Icon name="sliders-horizontal" size={22} style={{color: '#ec1c24'}} />
+                                                        <h3 className="text-lg font-bold text-gray-800">Filtros de Análisis</h3>
                                                     </div>
                                                     
-                                                    {/* Filtro de Rango de Importe Total */}
-                                                    <div className="mb-6 p-4 bg-white rounded-lg border border-gray-200">
-                                                        <label className="block text-sm font-medium text-gray-700 mb-3">Rango de Importe Total</label>
-                                                        <div className="space-y-2">
-                                                            <div className="flex gap-4 mb-4">
+                                                    {/* Filtro de Rango */}
+                                                    <div className="mb-6 p-5 bg-white rounded-xl border" style={{borderColor: 'rgba(96, 96, 96, 0.1)'}}>
+                                                        <label className="block text-sm font-bold text-gray-700 mb-4">Rango de Importe Total</label>
+                                                        <div className="space-y-3">
+                                                            <div className="flex gap-4">
                                                                 <div className="flex-1">
-                                                                    <label className="block text-xs text-gray-600 mb-1">Mínimo</label>
+                                                                    <label className="block text-xs font-semibold text-secondary mb-2">Mínimo</label>
                                                                     <input
                                                                         type="text"
                                                                         value={'$' + filters.montoRange[0].toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
@@ -866,12 +1094,13 @@
                                                                             const newMin = parseFloat(cleanValue) || 0;
                                                                             setFilters({...filters, montoRange: [Math.max(0, Math.min(newMin, getMontoRange().max)), filters.montoRange[1]]});
                                                                         }}
-                                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                                                        className="w-full px-4 py-2.5 border rounded-lg font-semibold"
+                                                                        style={{borderColor: 'rgba(96, 96, 96, 0.2)'}}
                                                                         placeholder="$0.00"
                                                                     />
                                                                 </div>
                                                                 <div className="flex-1">
-                                                                    <label className="block text-xs text-gray-600 mb-1">Máximo</label>
+                                                                    <label className="block text-xs font-semibold text-secondary mb-2">Máximo</label>
                                                                     <input
                                                                         type="text"
                                                                         value={'$' + filters.montoRange[1].toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
@@ -880,12 +1109,13 @@
                                                                             const newMax = parseFloat(cleanValue) || getMontoRange().max;
                                                                             setFilters({...filters, montoRange: [filters.montoRange[0], Math.min(newMax, getMontoRange().max)]});
                                                                         }}
-                                                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500"
+                                                                        className="w-full px-4 py-2.5 border rounded-lg font-semibold"
+                                                                        style={{borderColor: 'rgba(96, 96, 96, 0.2)'}}
                                                                         placeholder={'$' + getMontoRange().max.toLocaleString('es-MX', {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                                                                     />
                                                                 </div>
                                                             </div>
-                                                            <div className="relative pt-1 pb-6">
+                                                            <div className="relative pt-2 pb-8">
                                                                 <div 
                                                                     className="range-slider-track"
                                                                     style={{
@@ -928,7 +1158,7 @@
                                                     </div>
 
                                                     {/* Filtros con Checkboxes */}
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">
                                                         {[
                                                             { field: 'estados', label: 'Estado', dataField: 'Estado' },
                                                             { field: 'ciudades', label: 'Ciudad', dataField: 'Ciudad' },
@@ -936,47 +1166,48 @@
                                                             { field: 'periodos', label: 'Periodo', dataField: 'Periodo' }
                                                         ].map(({ field, label, dataField }) => (
                                                             <div key={field} className="relative">
-                                                                <label className="block text-sm font-medium text-gray-700 mb-1">{label}</label>
+                                                                <label className="block text-sm font-semibold text-gray-700 mb-2">{label}</label>
                                                                 <button
                                                                     onClick={() => setOpenAnalyticsDropdown(openAnalyticsDropdown === field ? null : field)}
-                                                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 text-sm text-left bg-white flex items-center justify-between"
+                                                                    className="w-full px-3 py-2.5 border rounded-lg text-sm text-left bg-white flex items-center justify-between hover:border-primary transition-all"
+                                                                    style={{borderColor: 'rgba(96, 96, 96, 0.2)'}}
                                                                 >
-                                                                    <span className="truncate">
+                                                                    <span className="truncate font-medium">
                                                                         {filters[field].length === 0
                                                                             ? 'Todos (' + getUniqueValues(dataField).length + ')'
                                                                             : filters[field].length + ' seleccionados'
                                                                         }
                                                                     </span>
-                                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                                                                    </svg>
+                                                                    <Icon name="chevron-down" size={16} className="text-gray-400" />
                                                                 </button>
                                                                 
                                                                 {openAnalyticsDropdown === field && (
-                                                                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-hidden">
-                                                                        <div className="p-2 border-b">
+                                                                    <div className="dropdown-modern absolute z-10 w-full mt-2 bg-white border rounded-xl shadow-2xl max-h-64 overflow-hidden" style={{borderColor: 'rgba(96, 96, 96, 0.1)'}}>
+                                                                        <div className="p-3 border-b" style={{borderColor: 'rgba(96, 96, 96, 0.1)'}}>
                                                                             <input
                                                                                 type="text"
                                                                                 value={analyticsSearchTerms[field] || ''}
                                                                                 onChange={(e) => setAnalyticsSearchTerms(prev => ({...prev, [field]: e.target.value}))}
-                                                                                className="w-full px-2 py-1 text-sm border border-gray-300 rounded"
+                                                                                className="w-full px-3 py-2 text-sm border rounded-lg"
+                                                                                style={{borderColor: 'rgba(96, 96, 96, 0.2)'}}
                                                                                 placeholder="Buscar..."
                                                                             />
                                                                         </div>
-                                                                        <div className="max-h-44 overflow-y-auto">
+                                                                        <div className="max-h-48 overflow-y-auto">
                                                                             {getAnalyticsFilterOptions(dataField).map(value => (
-                                                                                <label key={value} className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer">
+                                                                                <label key={value} className="flex items-center px-4 py-2.5 hover:bg-red-50 cursor-pointer transition-all">
                                                                                     <input
                                                                                         type="checkbox"
                                                                                         checked={filters[field].includes(value)}
                                                                                         onChange={() => toggleAnalyticsFilterValue(field, value)}
-                                                                                        className="mr-2"
+                                                                                        className="mr-3 accent-primary"
+                                                                                        style={{accentColor: '#ec1c24'}}
                                                                                     />
-                                                                                    <span className="text-sm text-gray-700 truncate">{value}</span>
+                                                                                    <span className="text-sm text-gray-700 font-medium truncate">{value}</span>
                                                                                 </label>
                                                                             ))}
                                                                             {getAnalyticsFilterOptions(dataField).length === 0 && (
-                                                                                <p className="px-3 py-2 text-sm text-gray-500">No hay coincidencias</p>
+                                                                                <p className="px-4 py-3 text-sm text-gray-500 text-center">No hay coincidencias</p>
                                                                             )}
                                                                         </div>
                                                                     </div>
@@ -985,9 +1216,9 @@
                                                         ))}
                                                     </div>
 
-                                                    <div className="flex items-center justify-between">
-                                                        <p className="text-sm text-gray-600">
-                                                            Mostrando <span className="font-semibold text-indigo-600">{prepareChartData().filteredCount}</span> de {data.length} registros
+                                                    <div className="flex items-center justify-between pt-4 border-t" style={{borderColor: 'rgba(96, 96, 96, 0.1)'}}>
+                                                        <p className="text-sm text-secondary">
+                                                            Mostrando <span className="font-bold text-primary">{prepareChartData().filteredCount}</span> de {data.length} registros
                                                         </p>
                                                         <button
                                                             onClick={() => {
@@ -1000,16 +1231,22 @@
                                                                     periodos: []
                                                                 });
                                                             }}
-                                                            className="px-4 py-2 text-sm bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                                                            className="btn-secondary px-5 py-2 text-white rounded-lg text-sm font-medium shadow-md"
                                                         >
                                                             Limpiar Filtros
                                                         </button>
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-white rounded-lg shadow-lg p-6 mb-6">
-                                                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Suma de Importe Total por Periodo</h3>
-                                                    <div style={{height: '400px'}}>
+                                                {/* Gráfico Principal */}
+                                                <div className="glass-effect rounded-2xl p-6 mb-6 neo-shadow">
+                                                    <div className="flex items-center gap-2 mb-5">
+                                                        <div className="p-2 rounded-lg" style={{background: 'linear-gradient(135deg, rgba(236, 28, 36, 0.1), rgba(255, 77, 84, 0.1))'}}>
+                                                            <Icon name="bar-chart-4" size={24} style={{color: '#ec1c24'}} />
+                                                        </div>
+                                                        <h3 className="text-xl font-bold text-gray-800">Suma de Importe Total por Periodo</h3>
+                                                    </div>
+                                                    <div style={{height: '450px'}}>
                                                         <ChartComponent
                                                             type="bar"
                                                             data={{
@@ -1017,9 +1254,15 @@
                                                                 datasets: [{
                                                                     label: 'Importe Total',
                                                                     data: prepareChartData().values,
-                                                                    backgroundColor: '#4F46E5',
-                                                                    borderColor: '#4338CA',
-                                                                    borderWidth: 1
+                                                                    backgroundColor: 'rgba(236, 28, 36, 0.8)',
+                                                                    borderColor: '#ec1c24',
+                                                                    borderWidth: 2,
+                                                                    borderRadius: 8,
+                                                                    barThickness: 40,
+                                                                    maxBarThickness: 50,
+                                                                    hoverBackgroundColor: '#ec1c24',
+                                                                    hoverBorderColor: '#d01920',
+                                                                    hoverBorderWidth: 3
                                                                 }]
                                                             }}
                                                             options={{
@@ -1028,9 +1271,28 @@
                                                                 plugins: {
                                                                     legend: { 
                                                                         display: true,
-                                                                        position: 'top'
+                                                                        position: 'top',
+                                                                        labels: {
+                                                                            font: {
+                                                                                size: 14,
+                                                                                weight: 'bold',
+                                                                                family: 'Inter'
+                                                                            },
+                                                                            color: '#606060',
+                                                                            padding: 20
+                                                                        }
                                                                     },
                                                                     tooltip: {
+                                                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                                                        padding: 12,
+                                                                        cornerRadius: 8,
+                                                                        titleFont: {
+                                                                            size: 14,
+                                                                            weight: 'bold'
+                                                                        },
+                                                                        bodyFont: {
+                                                                            size: 13
+                                                                        },
                                                                         callbacks: {
                                                                             label: (context) => 'Importe Total: $' + context.parsed.y.toLocaleString('es-MX')
                                                                         }
@@ -1039,25 +1301,58 @@
                                                                 scales: {
                                                                     y: {
                                                                         beginAtZero: true,
+                                                                        max: Math.max(...prepareChartData().values) * 1.2,
+                                                                        grid: {
+                                                                            color: 'rgba(96, 96, 96, 0.08)',
+                                                                            drawBorder: false
+                                                                        },
                                                                         ticks: {
-                                                                            callback: (value) => '$' + (value / 1000).toFixed(0) + 'k'
+                                                                            font: {
+                                                                                size: 12,
+                                                                                weight: '600',
+                                                                                family: 'Inter'
+                                                                            },
+                                                                            color: '#606060',
+                                                                            callback: (value) => '$' + (value / 1000).toFixed(0) + 'k',
+                                                                            padding: 10
                                                                         }
                                                                     },
                                                                     x: {
+                                                                        grid: {
+                                                                            display: false,
+                                                                            drawBorder: false
+                                                                        },
                                                                         ticks: {
+                                                                            font: {
+                                                                                size: 12,
+                                                                                weight: '600',
+                                                                                family: 'Inter'
+                                                                            },
+                                                                            color: '#606060',
                                                                             maxRotation: 45,
-                                                                            minRotation: 45
+                                                                            minRotation: 45,
+                                                                            padding: 10
                                                                         }
                                                                     }
+                                                                },
+                                                                animation: {
+                                                                    duration: 800,
+                                                                    easing: 'easeInOutQuart'
                                                                 }
                                                             }}
                                                         />
                                                     </div>
                                                 </div>
 
-                                                <div className="bg-white rounded-lg shadow-lg p-6">
-                                                    <h3 className="text-xl font-semibold text-gray-800 mb-4">Resumen Estadístico</h3>
-                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                                {/* Resumen Estadístico */}
+                                                <div className="glass-effect rounded-2xl p-6 neo-shadow">
+                                                    <div className="flex items-center gap-2 mb-5">
+                                                        <div className="p-2 rounded-lg" style={{background: 'linear-gradient(135deg, rgba(236, 28, 36, 0.1), rgba(255, 77, 84, 0.1))'}}>
+                                                            <Icon name="trending-up" size={24} style={{color: '#ec1c24'}} />
+                                                        </div>
+                                                        <h3 className="text-xl font-bold text-gray-800">Resumen Estadístico</h3>
+                                                    </div>
+                                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
                                                         {(() => {
                                                             const filtered = data.filter(row => {
                                                                 const importe = parseFloat(row['Importe total']) || 0;
@@ -1079,21 +1374,21 @@
                                                             
                                                             return (
                                                                 <React.Fragment>
-                                                                    <div className="bg-indigo-50 rounded-lg p-4">
-                                                                        <p className="text-sm text-gray-600 mb-1">Total Facturado</p>
-                                                                        <p className="text-2xl font-bold text-indigo-600">{'$' + suma.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
+                                                                    <div className="rounded-xl p-5 transition-all hover:shadow-lg" style={{background: 'linear-gradient(135deg, rgba(236, 28, 36, 0.05), rgba(255, 77, 84, 0.05))', border: '2px solid rgba(236, 28, 36, 0.1)'}}>
+                                                                        <p className="text-secondary text-sm font-semibold mb-2">Total Facturado</p>
+                                                                        <p className="text-3xl font-bold" style={{color: '#ec1c24'}}>{'$' + suma.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
                                                                     </div>
-                                                                    <div className="bg-blue-50 rounded-lg p-4">
-                                                                        <p className="text-sm text-gray-600 mb-1">Promedio</p>
-                                                                        <p className="text-2xl font-bold text-blue-600">{'$' + promedio.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
+                                                                    <div className="rounded-xl p-5 transition-all hover:shadow-lg" style={{background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.05), rgba(20, 220, 142, 0.05))', border: '2px solid rgba(16, 185, 129, 0.1)'}}>
+                                                                        <p className="text-secondary text-sm font-semibold mb-2">Promedio</p>
+                                                                        <p className="text-3xl font-bold" style={{color: '#10b981'}}>{'$' + promedio.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
                                                                     </div>
-                                                                    <div className="bg-green-50 rounded-lg p-4">
-                                                                        <p className="text-sm text-gray-600 mb-1">Máximo</p>
-                                                                        <p className="text-2xl font-bold text-green-600">{'$' + max.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
+                                                                    <div className="rounded-xl p-5 transition-all hover:shadow-lg" style={{background: 'linear-gradient(135deg, rgba(96, 96, 96, 0.05), rgba(120, 120, 120, 0.05))', border: '2px solid rgba(96, 96, 96, 0.1)'}}>
+                                                                        <p className="text-secondary text-sm font-semibold mb-2">Máximo</p>
+                                                                        <p className="text-3xl font-bold" style={{color: '#606060'}}>{'$' + max.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
                                                                     </div>
-                                                                    <div className="bg-orange-50 rounded-lg p-4">
-                                                                        <p className="text-sm text-gray-600 mb-1">Mínimo</p>
-                                                                        <p className="text-2xl font-bold text-orange-600">{'$' + min.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
+                                                                    <div className="rounded-xl p-5 transition-all hover:shadow-lg" style={{background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.05), rgba(251, 191, 36, 0.05))', border: '2px solid rgba(245, 158, 11, 0.1)'}}>
+                                                                        <p className="text-secondary text-sm font-semibold mb-2">Mínimo</p>
+                                                                        <p className="text-3xl font-bold" style={{color: '#f59e0b'}}>{'$' + min.toLocaleString('es-MX', {maximumFractionDigits: 0})}</p>
                                                                     </div>
                                                                 </React.Fragment>
                                                             );
