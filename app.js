@@ -123,7 +123,7 @@ const App = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [tableFilters, setTableFilters] = useState({
         importeRange: [0, 100000],
-        RPU: [], Periodo: [], Dirección: [], Ciudad: [], Estado: [], RFC: []
+        RPU: [], Periodo: [], Nombre: [], Dirección: [], Ciudad: [], Estado: [], RFC: []
     });
     const [filters, setFilters] = useState({
         montoRange: [0, 100000],
@@ -560,11 +560,12 @@ const App = () => {
             const matchImporte = importe >= tableFilters.importeRange[0] && importe <= tableFilters.importeRange[1];
             const matchRPU = tableFilters.RPU.length === 0 || tableFilters.RPU.includes(row.rpu);
             const matchPeriodo = tableFilters.Periodo.length === 0 || tableFilters.Periodo.includes(row.periodo);
+            const matchNombre = tableFilters.Nombre.length === 0 || tableFilters.Nombre.includes(row.nombre);
             const matchCiudad = tableFilters.Ciudad.length === 0 || tableFilters.Ciudad.includes(row.ciudad);
             const matchEstado = tableFilters.Estado.length === 0 || tableFilters.Estado.includes(row.estado);
             const matchRFC = tableFilters.RFC.length === 0 || tableFilters.RFC.includes(row.rfc);
             
-            return matchImporte && matchRPU && matchPeriodo && matchCiudad && matchEstado && matchRFC;
+            return matchImporte && matchRPU && matchPeriodo && matchNombre && matchCiudad && matchEstado && matchRFC;
         });
     }, [data, tableFilters]);
 
@@ -574,6 +575,28 @@ const App = () => {
     }, [getFilteredTableData, currentPage]);
 
     const totalPages = Math.ceil(getFilteredTableData.length / CONFIG.ITEMS_PER_PAGE);
+
+    // Valores únicos para filtros de checkboxes
+    const uniqueRPU = useMemo(() => Array.from(new Set(data.map(r => r.rpu))).filter(Boolean).sort(), [data]);
+    const uniquePeriodos = useMemo(() => Array.from(new Set(data.map(r => r.periodo))).filter(Boolean).sort(), [data]);
+    const uniqueNombres = useMemo(() => Array.from(new Set(data.map(r => r.nombre))).filter(Boolean).sort(), [data]);
+
+    // Helper para alternar valores en filtros de checkboxes
+    const toggleFilter = (key, value) => {
+        setTableFilters(prev => {
+            const arr = prev[key] || [];
+            const exists = arr.includes(value);
+            const nextArr = exists ? arr.filter(v => v !== value) : [...arr, value];
+            return { ...prev, [key]: nextArr };
+        });
+    };
+
+    // Formateo robusto de fechas (muestra original si no es parseable)
+    const formatDate = (value) => {
+        if (!value) return '-';
+        const d = new Date(value);
+        return isNaN(d.getTime()) ? (typeof value === 'string' ? value : '-') : d.toLocaleDateString();
+    };
 
     const prepareChartData = () => {
         const filtered = data.filter(row => {
@@ -826,8 +849,104 @@ const App = () => {
                                 React.createElement('p', { className: 'text-gray-400 mt-2' }, 'Importa un archivo Excel para comenzar')
                             )
                             : React.createElement('div', null,
-                                React.createElement('p', { className: 'text-center text-gray-600 py-10' }, 
-                                    `Mostrando ${paginatedData.length} de ${getFilteredTableData.length} registros (página ${currentPage} de ${totalPages})`
+                                // Panel de filtros
+                                React.createElement('div', { className: 'mb-6 rounded-2xl bg-white neo-shadow p-6' },
+                                    React.createElement('div', { className: 'flex flex-col gap-6' },
+                                        // Slider único para importe (máximo)
+                                        React.createElement('div', null,
+                                            React.createElement('label', { className: 'block text-sm font-medium text-gray-700 mb-2' }, 'Importe máximo'),
+                                            React.createElement('div', { className: 'flex items-center gap-3' },
+                                                React.createElement('input', {
+                                                    type: 'range', min: 0, max: filters.montoRange[1],
+                                                    value: tableFilters.importeRange[1],
+                                                    onChange: (e) => setTableFilters(prev => ({ ...prev, importeRange: [0, Number(e.target.value)] })),
+                                                    className: 'w-full'
+                                                }),
+                                                React.createElement('span', { className: 'text-sm text-gray-700 w-28 text-right' }, `$${Number(tableFilters.importeRange[1]).toFixed(0)}`)
+                                            )
+                                        ),
+                                        // Checkboxes de RPU, Periodo y Nombre
+                                        React.createElement('div', { className: 'grid grid-cols-1 md:grid-cols-3 gap-6' },
+                                            React.createElement('div', null,
+                                                React.createElement('h4', { className: 'text-sm font-semibold text-gray-800 mb-2' }, 'RPU'),
+                                                React.createElement('div', { className: 'max-h-40 overflow-auto border rounded-lg p-2' },
+                                                    uniqueRPU.map((v) => React.createElement('label', { key: v, className: 'flex items-center gap-2 py-1 text-sm' },
+                                                        React.createElement('input', {
+                                                            type: 'checkbox', checked: tableFilters.RPU.includes(v),
+                                                            onChange: () => toggleFilter('RPU', v)
+                                                        }),
+                                                        React.createElement('span', null, v)
+                                                    ))
+                                                )
+                                            ),
+                                            React.createElement('div', null,
+                                                React.createElement('h4', { className: 'text-sm font-semibold text-gray-800 mb-2' }, 'Periodo'),
+                                                React.createElement('div', { className: 'max-h-40 overflow-auto border rounded-lg p-2' },
+                                                    uniquePeriodos.map((v) => React.createElement('label', { key: v, className: 'flex items-center gap-2 py-1 text-sm' },
+                                                        React.createElement('input', {
+                                                            type: 'checkbox', checked: tableFilters.Periodo.includes(v),
+                                                            onChange: () => toggleFilter('Periodo', v)
+                                                        }),
+                                                        React.createElement('span', null, v)
+                                                    ))
+                                                )
+                                            ),
+                                            React.createElement('div', null,
+                                                React.createElement('h4', { className: 'text-sm font-semibold text-gray-800 mb-2' }, 'Nombre'),
+                                                React.createElement('div', { className: 'max-h-40 overflow-auto border rounded-lg p-2' },
+                                                    uniqueNombres.map((v) => React.createElement('label', { key: v, className: 'flex items-center gap-2 py-1 text-sm' },
+                                                        React.createElement('input', {
+                                                            type: 'checkbox', checked: tableFilters.Nombre.includes(v),
+                                                            onChange: () => toggleFilter('Nombre', v)
+                                                        }),
+                                                        React.createElement('span', null, v)
+                                                    ))
+                                                )
+                                            )
+                                        ),
+                                        React.createElement('div', { className: 'flex justify-end' },
+                                            React.createElement('button', {
+                                                className: 'px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 text-sm',
+                                                onClick: () => setTableFilters(prev => ({ ...prev, RPU: [], Periodo: [], Nombre: [] }))
+                                            }, 'Limpiar filtros')
+                                        )
+                                    )
+                                ),
+                                React.createElement('div', { className: 'overflow-x-auto' },
+                                    React.createElement('table', { className: 'min-w-full bg-white rounded-xl overflow-hidden neo-shadow' },
+                                        React.createElement('thead', { className: 'bg-gray-100' },
+                                            React.createElement('tr', null,
+                                                React.createElement('th', { className: 'py-3 px-4 text-left text-sm font-medium text-gray-600' }, 'RPU'),
+                                                React.createElement('th', { className: 'py-3 px-4 text-left text-sm font-medium text-gray-600' }, 'Periodo'),
+                                                React.createElement('th', { className: 'py-3 px-4 text-left text-sm font-medium text-gray-600' }, 'Nombre'),
+                                                React.createElement('th', { className: 'py-3 px-4 text-left text-sm font-medium text-gray-600' }, 'Dirección'),
+                                                React.createElement('th', { className: 'py-3 px-4 text-left text-sm font-medium text-gray-600' }, 'Importe total ($)'),
+                                                React.createElement('th', { className: 'py-3 px-4 text-left text-sm font-medium text-gray-600' }, 'Fecha desde'),
+                                                React.createElement('th', { className: 'py-3 px-4 text-left text-sm font-medium text-gray-600' }, 'Fecha hasta'),
+                                                React.createElement('th', { className: 'py-3 px-4 text-left text-sm font-medium text-gray-600' }, 'Fecha límite de pago')
+                                            )
+                                        ),
+                                        React.createElement('tbody', null,
+                                            paginatedData.map((item, index) => 
+                                                React.createElement('tr', { 
+                                                    key: index,
+                                                    className: index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                                },
+                                                    React.createElement('td', { className: 'py-3 px-4 text-sm text-gray-700' }, item?.rpu ?? '-'),
+                                                    React.createElement('td', { className: 'py-3 px-4 text-sm text-gray-700' }, item?.periodo ?? '-'),
+                                                    React.createElement('td', { className: 'py-3 px-4 text-sm text-gray-700' }, item?.nombre ?? '-'),
+                                                    React.createElement('td', { className: 'py-3 px-4 text-sm text-gray-700' }, item?.direccion ?? '-'),
+                                                    React.createElement('td', { className: 'py-3 px-4 text-sm text-gray-700' }, (item?.importe_total !== undefined && item?.importe_total !== null && !isNaN(Number(item.importe_total))) ? `$${Number(item.importe_total).toFixed(2)}` : '-'),
+                                                    React.createElement('td', { className: 'py-3 px-4 text-sm text-gray-700' }, formatDate(item?.fecha_desde)),
+                                                    React.createElement('td', { className: 'py-3 px-4 text-sm text-gray-700' }, formatDate(item?.fecha_hasta)),
+                                                    React.createElement('td', { className: 'py-3 px-4 text-sm text-gray-700' }, formatDate(item?.fecha_limite_pago))
+                                                )
+                                            )
+                                        )
+                                    )
+                                ),
+                                React.createElement('p', { className: 'text-center text-gray-600 py-4' }, 
+                                    `Mostrando ${Array.isArray(paginatedData) ? paginatedData.length : 0} de ${Array.isArray(getFilteredTableData) ? getFilteredTableData.length : 0} registros (página ${currentPage} de ${totalPages})`
                                 ),
                                 React.createElement('div', { className: 'flex justify-center gap-2 mt-4' },
                                     React.createElement('button', {
